@@ -1,0 +1,12 @@
+# For training and inference
+datasets
+transformers[torch]
+torch
+numpy
+scikit-learn
+
+# For the web application
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2

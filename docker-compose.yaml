@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # This command overrides the Dockerfile's CMD.
+    # It runs the training script and then the container exits.
+    command: python src/train.py
+    volumes:
+      # Mount the source code into the container
+      - ./src:/app/src
+      # Mount the named volume to store the model artifacts.
+      # The training script will write to /app/results, which is this volume.
+      - model-data:/app/results
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # This service depends on the 'training' service completing successfully.
+    depends_on:
+      training:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the source code, static files, and templates for live-reloading (optional but good for dev)
+      - ./src:/app/src
+      - ./static:/app/static
+      - ./templates:/app/templates
+      # Mount the model-data volume read-only, as the webapp only needs to load the model.
+      - model-data:/app/results:ro
+    # The default CMD from the Dockerfile will be used here:
+    # ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Define the named volume that will be shared between services.
+volumes:
+  model-data:

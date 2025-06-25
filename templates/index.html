@@ -1,0 +1,116 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLDR Live Highlighter</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>TLDR Live Highlighter</h1>
+        <p>Type your text below. Words considered "fluff" will be highlighted in red in real-time.</p>
+
+        <div class="editor-container">
+            <textarea id="text-input" placeholder="Start typing your long text here..." spellcheck="false"
+                autocomplete="off"></textarea>
+            <div id="highlight-output" aria-hidden="true"></div>
+        </div>
+
+        <div class="legend">
+            <span class="highlight-red">FLUFF Word</span>
+            <span>ESSENTIAL Word</span>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const highlightOutput = document.getElementById('highlight-output');
+        const statusDiv = document.getElementById('status');
+        let debounceTimer;
+
+        // This function sends the text to the backend and gets predictions
+        async function getHighlights(text) {
+            if (text.trim() === '') {
+                highlightOutput.innerHTML = '';
+                statusDiv.textContent = '';
+                return;
+            }
+
+            statusDiv.textContent = 'Analyzing...';
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderHighlights(data.predictions);
+                statusDiv.textContent = '';
+
+            } catch (error) {
+                console.error("Error fetching predictions:", error);
+                statusDiv.innerHTML = `<span style="color: #ff4d4d;">Error communicating with server.</span>`;
+            }
+        }
+
+        // This function renders the highlighted text by joining tokens
+        function renderHighlights(predictions) {
+            let currentHtml = '';
+            predictions.forEach(p => {
+                // Sanitize token for HTML display
+                let displayToken = p.token.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                // The tokenizer might split words, e.g., 'typing' -> 'typ', '##ing'
+                // We join subwords without a leading space.
+                let tokenText = displayToken.startsWith('##')
+                    ? displayToken.substring(2)
+                    : ' ' + displayToken;
+
+                if (p.label === 'FLUFF') {
+                    currentHtml += `<span class="highlight-red">${tokenText}</span>`;
+                } else {
+                    currentHtml += `<span>${tokenText}</span>`;
+                }
+            });
+
+            // Replace newlines in the input with <br> for the output div
+            let finalHtml = currentHtml.trim().replace(/\n/g, '<br>');
+            highlightOutput.innerHTML = finalHtml;
+        }
+
+        function syncScroll() {
+            highlightOutput.scrollTop = textInput.scrollTop;
+            highlightOutput.scrollLeft = textInput.scrollLeft;
+        }
+
+        // Listen for input on the textarea
+        textInput.addEventListener('input', (e) => {
+            const text = e.target.value;
+            // Debouncing: We wait 300ms after the user stops typing to send the request.
+            // This prevents spamming the server with requests on every keystroke.
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                getHighlights(text);
+            }, 300);
+
+            // Add a slight delay before syncing scroll to allow the DOM to update
+            setTimeout(syncScroll, 10);
+        });
+
+        // Also sync scroll on manual scroll
+        textInput.addEventListener('scroll', syncScroll);
+
+    </script>
+</body>
+
+</html>

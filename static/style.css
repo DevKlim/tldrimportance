@@ -1,0 +1,122 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    width: 100%;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #0d1117;
+    margin-bottom: 10px;
+}
+
+p {
+    text-align: center;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.editor-container {
+    position: relative;
+    width: 100%;
+    height: 350px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+#text-input,
+#highlight-output {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    margin: 0;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    font-family: "Courier New", Courier, monospace;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow: auto;
+    /* Important for scrolling */
+}
+
+#text-input {
+    z-index: 1;
+    /* Input field is on top but transparent */
+    color: transparent;
+    /* Makes the actual text invisible */
+    caret-color: #333;
+    /* Makes the typing cursor visible */
+    resize: none;
+}
+
+#text-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+#highlight-output {
+    z-index: 0;
+    /* Highlighted text is in the background */
+    pointer-events: none;
+    /* Allows clicks to go through to the textarea */
+    color: #333;
+}
+
+.highlight-red {
+    background-color: rgba(255, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+#status {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    height: 20px;
+}
+
+.legend {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.legend span {
+    display: inline-block;
+    margin: 0 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.legend .highlight-red {
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+.legend span:not(.highlight-red) {
+    border: 1px solid #ccc;
+}

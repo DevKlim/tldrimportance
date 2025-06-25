@@ -1,0 +1,22 @@
+# .dockerignore
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Training artifacts not needed in production image
+runs/
