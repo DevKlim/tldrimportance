@@ -1,7 +1,6 @@
 # For training and inference
 datasets
-transformers[torch]
-torch
+transformers # The [torch] extra is not needed as torch will be pre-installed
 numpy
 scikit-learn
 
