@@ -7,7 +7,7 @@ from transformers import (
     DataCollatorForTokenClassification,
 )
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
-from src.data_processing import create_and_process_dataset, MODEL_CHECKPOINT, LABELS
+from src.preprocess_data import get_tokenized_datasets, MODEL_CHECKPOINT, LABELS
 
 def compute_metrics(p):
     """
@@ -17,7 +17,7 @@ def compute_metrics(p):
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
 
-    # Remove ignored index (-100)
+    # Flatten the predictions and labels, ignoring the -100 index
     true_predictions = [
         p for prediction, label in zip(predictions, labels) for (p, l) in zip(prediction, label) if l != -100
     ]
@@ -26,7 +26,7 @@ def compute_metrics(p):
     ]
 
     # Calculate metrics for the "ESSENTIAL" class (label=1)
-    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, true_predictions, average="binary", pos_label=1)
+    precision, recall, f1, _ = precision_recall_fscore_support(true_labels, true_predictions, average="binary", pos_label=LABELS.index("ESSENTIAL"))
     acc = accuracy_score(true_labels, true_predictions)
 
     return {
@@ -40,8 +40,9 @@ def train_model():
     """
     Main function to orchestrate the training process.
     """
-    # 1. Load and process data
-    train_dataset, eval_dataset, tokenizer = create_and_process_dataset()
+    # 1. Load and process data using the consolidated script
+    print("Loading and tokenizing datasets...")
+    train_dataset, eval_dataset, tokenizer = get_tokenized_datasets()
 
     # 2. Define the model
     # We create a mapping from label name to ID and vice-versa for clarity
@@ -59,8 +60,9 @@ def train_model():
     ).to(device)
 
     # 3. Define Training Arguments
-    # The output directory where the model predictions and checkpoints will be written.
-    output_dir = "./results"
+    # The error was caused by an old `transformers` version. With the pinned
+    # version, these modern arguments will work correctly.
+    output_dir = "/app/results"
     
     args = TrainingArguments(
         output_dir=output_dir,
@@ -69,7 +71,7 @@ def train_model():
         learning_rate=2e-5,
         per_device_train_batch_size=16,
         per_device_eval_batch_size=16,
-        num_train_epochs=3, # More epochs can lead to better performance
+        num_train_epochs=3,
         weight_decay=0.01,
         load_best_model_at_end=True,
         metric_for_best_model="f1",
@@ -77,7 +79,7 @@ def train_model():
     )
 
     # 4. Data Collator
-    # This will dynamically pad the inputs and labels in each batch to the same length
+    # This will dynamically pad the inputs and labels in each batch.
     data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
     # 5. Initialize Trainer
@@ -91,11 +93,10 @@ def train_model():
         compute_metrics=compute_metrics,
     )
 
-    # 6. Start Training
     print("Starting model training...")
     trainer.train()
 
-    # 7. Save the final model
+    # 6. Save the final model and tokenizer
     print("Training finished. Saving best model...")
     trainer.save_model(output_dir)
     print(f"Model saved to {output_dir}")

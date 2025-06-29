@@ -63,29 +63,25 @@
             }
         }
 
-        // This function renders the highlighted text by joining tokens
+        // This function now renders text chunks directly, avoiding token stitching bugs.
         function renderHighlights(predictions) {
-            let currentHtml = '';
-            predictions.forEach(p => {
-                // Sanitize token for HTML display
-                let displayToken = p.token.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            // Clear previous content
+            highlightOutput.innerHTML = '';
 
-                // The tokenizer might split words, e.g., 'typing' -> 'typ', '##ing'
-                // We join subwords without a leading space.
-                let tokenText = displayToken.startsWith('##')
-                    ? displayToken.substring(2)
-                    : ' ' + displayToken;
+            predictions.forEach(chunk => {
+                const span = document.createElement('span');
+                // Use textContent to safely insert text, preventing XSS
+                span.textContent = chunk.text;
 
-                if (p.label === 'FLUFF') {
-                    currentHtml += `<span class="highlight-red">${tokenText}</span>`;
-                } else {
-                    currentHtml += `<span>${tokenText}</span>`;
+                if (chunk.label === 'FLUFF') {
+                    span.className = 'highlight-red';
                 }
+
+                highlightOutput.appendChild(span);
             });
 
-            // Replace newlines in the input with <br> for the output div
-            let finalHtml = currentHtml.trim().replace(/\n/g, '<br>');
-            highlightOutput.innerHTML = finalHtml;
+            // Replace newlines with <br> for visual consistency
+            highlightOutput.innerHTML = highlightOutput.innerHTML.replace(/\n/g, '<br>');
         }
 
         function syncScroll() {
@@ -103,8 +99,10 @@
                 getHighlights(text);
             }, 300);
 
-            // Add a slight delay before syncing scroll to allow the DOM to update
-            setTimeout(syncScroll, 10);
+            // Sync immediately for a smoother typing experience
+            highlightOutput.textContent = text;
+            highlightOutput.innerHTML = highlightOutput.innerHTML.replace(/\n/g, '<br>');
+            syncScroll();
         });
 
         // Also sync scroll on manual scroll

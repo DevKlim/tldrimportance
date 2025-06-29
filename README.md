@@ -4,15 +4,15 @@ This project trains a machine learning model to provide real-time feedback on te
 
 ## How it Works
 
-1.  **Data**: The model is trained on the `trl-lib/tldr` dataset.
-2.  **Modeling**: The problem is framed as a **Token Classification** task. We fine-tune a `DistilBERT` model to classify each word as either `ESSENTIAL` or `FLUFF`.
-3.  **Application**: A FastAPI backend serves the trained model. A simple HTML/JS frontend sends the user's text to the backend and highlights the response in real-time.
+1.  **Data Preprocessing**: The project uses the `trl-lib/tldr` dataset. A one-time preprocessing script (`src/preprocess_data.py`) runs first. It uses `spaCy` to analyze each post and its summary. It identifies key phrases (like noun chunks) in the post that are semantically similar to the summary. These are considered "essential". This process generates a new labeled dataset saved as a CSV.
+
+2.  **Modeling**: The problem is framed as a **Token Classification** task. We fine-tune a `DistilBERT` model on the preprocessed data to classify each word (token) from the input text as either `ESSENTIAL` or `FLUFF`.
+
+3.  **Application**: A FastAPI backend serves the fine-tuned model. A simple HTML/JS frontend sends the user's text to the backend as they type. The backend returns chunks of the original text labeled as `FLUFF` or `ESSENTIAL`, which the frontend then uses to apply highlighting.
 
 ---
 
 ## How to Run with Docker Compose (GPU Recommended)
-
-This is the easiest and most powerful way to run the project. It automates the entire workflow: training on the GPU and then serving the model.
 
 ### Prerequisites for GPU Support
 

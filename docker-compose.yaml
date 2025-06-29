@@ -1,29 +1,29 @@
-version: "3.9"
-
 services:
   training:
     build:
       context: .
-      # Use the specific Dockerfile for GPU
-      dockerfile: Dockerfile.gpu
-    command: python src/train.py
+      dockerfile: Dockerfile
+    # This command first runs the one-time preprocessing, then starts training.
+    # The preprocessing script is smart enough to skip if the output file already exists.
+    command: sh -c "python src/preprocess_data.py && python src/train.py"
     volumes:
       - ./src:/app/src
       - model-data:/app/results
+      - data-cache:/app/data # Persists preprocessed data
+    environment:
+      - PYTHONPATH=/app
     deploy:
       resources:
         reservations:
           devices:
-            # This section grants the container access to the host's GPU
             - driver: nvidia
-              count: all # or specify a number, e.g., 1
+              count: all
               capabilities: [gpu]
 
   webapp:
     build:
       context: .
-      # Also use the GPU Dockerfile for the webapp for faster inference
-      dockerfile: Dockerfile.gpu
+      dockerfile: Dockerfile
     depends_on:
       training:
         condition: service_completed_successfully
@@ -34,16 +34,19 @@ services:
       - ./static:/app/static
       - ./templates:/app/templates
       - model-data:/app/results:ro
+    environment:
+      - PYTHONPATH=/app
     deploy:
       resources:
         reservations:
           devices:
-            # Also give the webapp access to the GPU
             - driver: nvidia
               count: all
               capabilities: [gpu]
 
-# Define the named volume that will be shared between services.
+# Define the named volumes that will be shared between services.
 volumes:
   model-data:
+    driver: local
+  data-cache:
     driver: local

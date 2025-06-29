@@ -1,11 +1,24 @@
+# requirements.txt
 # For training and inference
-datasets
-transformers # The [torch] extra is not needed as torch will be pre-installed
-numpy
-scikit-learn
+# Pinned versions ensure reproducibility and prevent resolver conflicts.
+# Main ML Libraries
+torch==2.3.1 # Note: This is installed via index-url in Dockerfile for CUDA version
+transformers==4.34.1
+datasets==2.14.5
+accelerate==0.24.1 # Pinned to be compatible with transformers
+
+# Preprocessing
+spacy==3.7.2
+# The spacy model 'en_core_web_md' is downloaded in the Dockerfile
+
+# Data Handling
+pandas==2.1.4
+numpy==1.26.4
+scikit-learn==1.3.1
+tqdm==4.66.2
 
 # For the web application
-fastapi
-uvicorn[standard]
-python-multipart
-jinja2
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.7
+jinja2==3.1.3
